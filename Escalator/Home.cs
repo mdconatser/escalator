@@ -186,8 +186,8 @@ namespace Escalator
                 {
                     records.Add(new Order()
                     {
-                        Lot = sheet.GetRow(rowIndex).Cells[3].ToString(),
-                        Subdivision = sheet.GetRow(rowIndex).Cells[4].ToString()
+                        Lot = sheet.GetRow(rowIndex).Cells[Convert.ToInt32(inputColLot.Value)].ToString(),
+                        Subdivision = sheet.GetRow(rowIndex).Cells[Convert.ToInt32(inputColSubdivision)].ToString()
                     });
                 }
 
