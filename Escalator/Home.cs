@@ -12,6 +12,8 @@ using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using System.IO;
 using System.Diagnostics;
+using CsvHelper;
+using System.Globalization;
 
 namespace Escalator
 {
@@ -31,25 +33,13 @@ namespace Escalator
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                var workbook = OpenWorkbook(openFileDialog1.FileName);
-                var sheet = workbook.GetSheetAt(0);
-                var output = CreateWorkbook();
+                var output = new XSSFWorkbook();
                 var outputSheet = output.CreateSheet();
 
-                List<Order> orders = new List<Order>();
-
-                // Get orders from output
-                for (int rowIndex = 0; rowIndex <= sheet.LastRowNum; rowIndex++)
-                {
-                    orders.Add(new Order() 
-                    { 
-                        Subdivision = sheet.GetRow(rowIndex).Cells[1].ToString(), 
-                        LotNumber = sheet.GetRow(rowIndex).Cells[0].ToString() 
-                    });
-                }
+                List<Order> orders = ImportOrders(openFileDialog1.FileName);
 
                 // Sort to desired output
-                orders = orders.OrderBy(x => x.Subdivision).ThenBy(x => x.LotNumber).ToList();
+                orders = orders.OrderBy(x => x.Subdivision).ThenBy(x => x.Lot).ToList();
 
                 // Transform to combine subdivisions together
                 orders = CombineOrders(orders);
@@ -73,7 +63,7 @@ namespace Escalator
                     row = outputSheet.CreateRow(rowCounter++);
 
                     col = row.CreateCell(colCounter++);
-                    col.SetCellValue(order.LotNumber);
+                    col.SetCellValue(order.Lot);
 
                     col = row.CreateCell(colCounter++);
                     col.SetCellValue(order.Subdivision);
@@ -87,7 +77,6 @@ namespace Escalator
                     output.Write(stream);
                 }
                 output.Close();
-                workbook.Close();
                 Process.Start(new ProcessStartInfo(openFileDialog1.FileName + "_Combined.xlsx") { UseShellExecute = true });
             }
         }
@@ -101,7 +90,7 @@ namespace Escalator
             {
                 // Check if every single lot is sequential, to shorten the output
                 string sequentialLot = null;
-                if (subdivision.Count() > 1 && subdivision.All(x => int.TryParse(x.LotNumber, out int result)))
+                if (subdivision.Count() > 1 && subdivision.All(x => int.TryParse(x.Lot, out int result)))
                 {
                     int? prevLotValue = null;
                     int? firstLotValue = null; // Note if same lot is encountered twice, throw some error
@@ -109,16 +98,16 @@ namespace Escalator
 
                     foreach (var lot in subdivision)
                     {
-                        if (!prevLotValue.HasValue || prevLotValue.Value + 1 == Convert.ToInt32(lot.LotNumber))
+                        if (!prevLotValue.HasValue || prevLotValue.Value + 1 == Convert.ToInt32(lot.Lot))
                         {
                             if (prevLotValue == null)
                             {
-                                firstLotValue = Convert.ToInt32(lot.LotNumber);
+                                firstLotValue = Convert.ToInt32(lot.Lot);
                                 prevLotValue = firstLotValue;
                             }
                             else
                             {
-                                finalLotValue = Convert.ToInt32(lot.LotNumber);
+                                finalLotValue = Convert.ToInt32(lot.Lot);
                                 prevLotValue = finalLotValue;
                             }
                         }
@@ -139,21 +128,17 @@ namespace Escalator
                 combined.Add(new Order()
                 {
                     Subdivision = subdivision.Key,
-                    LotNumber = sequentialLot ?? string.Join(", ", subdivision.Select(x => x.LotNumber))
+                    Lot = sequentialLot ?? string.Join(", ", subdivision.Select(x => x.Lot))
                 });
             }
 
             return combined;
         }
 
-        public IWorkbook CreateWorkbook()
-        {
-            return new XSSFWorkbook();
-        }
-
         // Attemps to read workbook as XLSX, then XLS, then fails.
-        public IWorkbook OpenWorkbook(string path)
+        public List<Order> ImportOrders(string path)
         {
+            List<Order> records;
             IWorkbook book;
 
             FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -171,10 +156,45 @@ namespace Escalator
             // If reading fails, try to read workbook as XLS:
             if (book == null)
             {
-                book = new HSSFWorkbook(fs);
+                try
+                {
+                    book = new HSSFWorkbook(fs);
+                }
+                catch
+                {
+                    book = null;
+                }
             }
 
-            return book;
+            // If reading fails, try to read workbook as CSV:
+            if (book == null)
+            {
+                using (var reader = new StreamReader(path))
+                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    records = csv.GetRecords<Order>().ToList();
+                }
+            }
+            else
+            {
+                var sheet = book.GetSheetAt(0);
+
+                records = new List<Order>();
+
+                // Get orders from input, skip header row
+                for (int rowIndex = 1; rowIndex <= sheet.LastRowNum; rowIndex++)
+                {
+                    records.Add(new Order()
+                    {
+                        Lot = sheet.GetRow(rowIndex).Cells[3].ToString(),
+                        Subdivision = sheet.GetRow(rowIndex).Cells[4].ToString()
+                    });
+                }
+
+                book.Close();
+            }
+
+            return records;
         }
     }
 }

@@ -9,6 +9,6 @@ namespace Escalator
     public class Order
     {
         public string Subdivision { get; set; }
-        public string LotNumber { get; set; }
+        public string Lot { get; set; }
     }
 }
