@@ -81,7 +81,8 @@ namespace Escalator
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(207, 226);
+            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.button2.Location = new System.Drawing.Point(370, 205);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(120, 23);
             this.button2.TabIndex = 3;
@@ -112,10 +113,12 @@ namespace Escalator
             // 
             // checklistDates
             // 
+            this.checklistDates.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.checklistDates.FormattingEnabled = true;
             this.checklistDates.Location = new System.Drawing.Point(147, 75);
             this.checklistDates.Name = "checklistDates";
-            this.checklistDates.Size = new System.Drawing.Size(180, 94);
+            this.checklistDates.Size = new System.Drawing.Size(343, 94);
             this.checklistDates.TabIndex = 6;
             // 
             // label1
@@ -140,7 +143,7 @@ namespace Escalator
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(339, 261);
+            this.ClientSize = new System.Drawing.Size(502, 240);
             this.Controls.Add(this.lblUpload);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.checklistDates);

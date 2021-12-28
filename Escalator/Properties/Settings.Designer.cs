@@ -34,17 +34,5 @@ namespace Escalator.Properties {
                 this["UseAddress"] = value;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string MailMap {
-            get {
-                return ((string)(this["MailMap"]));
-            }
-            set {
-                this["MailMap"] = value;
-            }
-        }
     }
 }

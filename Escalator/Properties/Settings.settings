@@ -5,8 +5,5 @@
     <Setting Name="UseAddress" Type="System.String" Scope="User">
       <Value Profile="(Default)">SPOT LOT, SPOPT LOT</Value>
     </Setting>
-    <Setting Name="MailMap" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
   </Settings>
 </SettingsFile>
