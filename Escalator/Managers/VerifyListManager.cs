@@ -2,6 +2,7 @@
 using CsvHelper.Configuration;
 using Escalator.Data;
 using NPOI.HSSF.UserModel;
+using NPOI.HSSF.Util;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
@@ -10,6 +11,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace Escalator
 {
@@ -18,11 +20,11 @@ namespace Escalator
         public static void ConvertExportToVerifyList(string path, List<string> requestedDates, OrderType orderType)
         {
             List<Order> orders = ImportOrders(path, orderType);
+            var errors = ValidateOrders(orders);
             orders = orders.Where(x => requestedDates.Contains(x.RequestedDate)).ToList();
             orders = orders.OrderBy(x => x.Subdivision).ThenBy(x => x.Lot).ToList();
             orders = CombineOrders(orders);
-
-            string outputPath = WriteVerifyList(orders, path);
+            string outputPath = WriteVerifyList(orders, errors, path);
             Process.Start(new ProcessStartInfo(outputPath) { UseShellExecute = true });
         }
 
@@ -47,8 +49,25 @@ namespace Escalator
             List<string> errors = new();
 
             // Check for the same lot appearing twice in the same subdivision
+            foreach (var subdivision in orders.Where(x => !x.IsSpotLot).GroupBy(x => x.Subdivision))
+            {
+                foreach (var lot in subdivision.Select(x => x.Lot).Distinct())
+                {
+                    if (subdivision.Where(x => x.Lot == lot).Count() > 1)
+                    {
+                        errors.Add($"Duplicate lot \"{lot}\" found in subdivision \"{subdivision.Key}");
+                    }
+                }
+            }
 
             // Check for the same spot lot address appearing twice
+            foreach (var address in orders.Where(x => x.IsSpotLot).GroupBy(x => x.Address))
+            {
+                if (address.Count() > 1)
+                {
+                    errors.Add($"Duplicate spot lot address \"{address.Key}\" found");
+                }
+            }
 
             return errors;
         }
@@ -56,32 +75,33 @@ namespace Escalator
         public static List<Order> CombineOrders(List<Order> orders)
         {
             var combined = new List<Order>();
-            var subdivisionsToLots = orders.Where(x => !x.IsSpotLot).GroupBy(x => x.Subdivision);
 
-            foreach (var subdivision in subdivisionsToLots)
+            foreach (var subdivision in orders.Where(x => !x.IsSpotLot).GroupBy(x => x.Subdivision))
             {
                 // Check if every single lot is sequential, to shorten the output
                 string sequentialLot = null;
-                if (subdivision.Count() > 1 && subdivision.All(x => int.TryParse(x.Lot, out int result)))
-                {
-                    string prevLot = null;
-                    int? prevLotValue = null;
-                    int? firstLotValue = null; // Note if same lot is encountered twice, throw some error
-                    int? finalLotValue = null;
 
-                    foreach (var lot in subdivision)
+                if (subdivision.Count() > 1)
+                {
+                    int? prevLotValue = null;
+
+                    string firstLot = null;
+                    string finalLot = null;
+
+                    foreach (var lot in subdivision.GroupBy(x => x.Lot))
                     {
-                        if (!prevLotValue.HasValue || prevLotValue.Value + 1 == Convert.ToInt32(lot.Lot))
+                        int lotValue = Encoding.ASCII.GetBytes(lot.Key).Select(x => (int)x).Sum();
+                        if (!prevLotValue.HasValue || prevLotValue.Value + 1 == lotValue)
                         {
                             if (prevLotValue == null)
                             {
-                                firstLotValue = Convert.ToInt32(lot.Lot);
-                                prevLotValue = firstLotValue;
+                                firstLot = lot.Key;
+                                prevLotValue = lotValue;
                             }
                             else
                             {
-                                finalLotValue = Convert.ToInt32(lot.Lot);
-                                prevLotValue = finalLotValue;
+                                finalLot = lot.Key;
+                                prevLotValue = lotValue;
                             }
                         }
                         else
@@ -90,10 +110,10 @@ namespace Escalator
                         }
                     }
 
-                    // Write lot as "1 - 5"
-                    if (firstLotValue.HasValue && finalLotValue.HasValue)
+                    // Write lot as "1 - 5" or "X1 - X5"
+                    if (firstLot != null && finalLot != null)
                     {
-                        sequentialLot = firstLotValue + " - " + finalLotValue;
+                        sequentialLot = firstLot + " - " + finalLot;
                     }
                 }
 
@@ -101,12 +121,26 @@ namespace Escalator
                 combined.Add(new Order()
                 {
                     Subdivision = subdivision.Key,
-                    Lot = sequentialLot ?? string.Join(", ", subdivision.Select(x => x.Lot))
+                    Lot = sequentialLot ?? string.Join(", ", subdivision.Select(x => x.Lot)),
+                    Address = subdivision.First().Address,
+                    IsSpotLot = false,
+                    OrderType = subdivision.First().OrderType
                 });
             }
 
             // Set spot lots and add them to output list
-            combined.AddRange(orders.Where(x => x.IsSpotLot).OrderBy(x => x.Address));
+            foreach (var spotLot in orders.Where(x => x.IsSpotLot).OrderBy(x => x.Address).GroupBy(x => x.Address))
+            {
+                // Create combined order for all of the same address
+                combined.Add(new Order()
+                {
+                    IsSpotLot = true,
+                    Address = spotLot.First().Address,
+                    Subdivision = spotLot.First().Subdivision,
+                    Lot = spotLot.First().Lot,
+                    OrderType = spotLot.First().OrderType
+                });
+            }
 
             return combined;
         }
@@ -189,30 +223,47 @@ namespace Escalator
             return records;
         }
 
-        public static string WriteVerifyList(List<Order> orders, string path)
+        public static string WriteVerifyList(List<Order> orders, List<string> errors, string path)
         {
             var output = new XSSFWorkbook();
-            var outputSheet = output.CreateSheet();
+            var outputSheet = output.CreateSheet("Verify List");
 
             var rowCounter = 0;
             var colCounter = 0;
+            var highestCol = 0;
 
             // Write sorted rows
             foreach (var order in orders)
             {
                 var row = outputSheet.CreateRow(rowCounter++);
                 var col = row.CreateCell(colCounter++);
-                col.SetCellValue(order.IsSpotLot ? "SPOT" : "");
+                col.SetCellValue(order.IsSpotLot ? "" : order.Subdivision);
 
                 col = row.CreateCell(colCounter++);
                 col.SetCellValue(order.VerifyText);
 
+                highestCol = colCounter;
                 colCounter = 0;
             }
 
-            for (int i = 0; i <= 1; i++)
+            for (int i = 0; i <= 4; i++)
             {
                 outputSheet.AutoSizeColumn(i);
+            }
+
+            // Write errors on same sheet to the right
+            ICellStyle errorStyle = output.CreateCellStyle();
+            XSSFFont font = (XSSFFont)output.CreateFont();
+            font.Color = HSSFColor.Red.Index;
+            errorStyle.SetFont(font);
+
+            for (int i = 0; i < errors.Count; i++)
+            {
+                IRow row = i < rowCounter ? outputSheet.GetRow(i) : outputSheet.CreateRow(rowCounter++);
+                var col = row.CreateCell(highestCol + 2);
+                col.CellStyle = errorStyle;
+
+                col.SetCellValue(errors[i]);
             }
 
             // Save output

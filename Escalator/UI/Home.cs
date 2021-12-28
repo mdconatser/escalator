@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace Escalator
@@ -15,7 +17,6 @@ namespace Escalator
 
         private void Home_Load(object sender, EventArgs e)
         {
-
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -57,6 +58,7 @@ namespace Escalator
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+                return;
             }
         }
 
@@ -76,7 +78,17 @@ namespace Escalator
                     return;
                 }
 
-                var dates = VerifyListManager.GetAvailableRequestedDates(openFileDialog1.FileName);
+                List<string> dates = null;
+
+                try
+                {
+                    dates = VerifyListManager.GetAvailableRequestedDates(openFileDialog1.FileName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                    return;
+                }
 
                 if (dates == null || dates.Count == 0)
                 {
