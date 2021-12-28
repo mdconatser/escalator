@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Escalator
+namespace Escalator.Data
 {
-    public class Order
+    public enum OrderType
     {
-        public string Subdivision { get; set; }
-        public string Lot { get; set; }
+        NONE,
+        STAIRS,
+        RAILS
     }
 }
