@@ -119,7 +119,7 @@ namespace Escalator
                 foreach (var item in items.OrderBy(x => x).GroupBy(x => x).ToList())
                 {
                     int itemValueText = Encoding.ASCII.GetBytes(new string(item.Key.Where(c => !char.IsDigit(c)).ToArray())).Select(x => (int)x).Sum();
-                    int itemValueNumeric = Convert.ToInt32(new string(item.Key.Where(c => char.IsDigit(c)).ToArray()));
+                    int.TryParse(new string(item.Key.Where(c => char.IsDigit(c)).ToArray()), out int itemValueNumeric);
                     int itemValue = itemValueText + itemValueNumeric;
 
                     if (!prevItemValue.HasValue || prevItemValue.Value + 1 == itemValue)
@@ -224,6 +224,7 @@ namespace Escalator
                     {
                         var record = new Order
                         {
+                            OrderID = csv.GetCleanedField("Order ID"),
                             Lot = csv.GetCleanedField("Lot"),
                             Subdivision = csv.GetCleanedField("Subdivision"),
                             Address = csv.GetCleanedField("Address"),
@@ -234,7 +235,10 @@ namespace Escalator
                             OrderType = orderType
                         };
 
-                        records.Add(record);
+                        if (!string.IsNullOrWhiteSpace(record.OrderID))
+                        {
+                            records.Add(record); //todo: add error warning if SOME fields existed but not the order ID
+                        }
                     }
                 }
             //}

@@ -14,6 +14,7 @@ namespace Escalator
             Rules = new Rule();
         }
         
+        public string OrderID { get; set; }
         public string Subdivision { get; set; }
         public string Lot { get; set; }
         public string Address { get; set; }
