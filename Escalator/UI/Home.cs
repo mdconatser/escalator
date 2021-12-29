@@ -102,6 +102,11 @@ namespace Escalator
                 {
                     checklistDates.Items.Add(date);
                 }
+
+                if (dates.Count == 1)
+                {
+                    checklistDates.SetItemChecked(0, true);
+                }
             }
         }
     }
