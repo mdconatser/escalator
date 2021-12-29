@@ -137,7 +137,7 @@ namespace Escalator
                     }
                     else
                     {
-                        shorthandList = shorthandList + (shorthandList != null ? " & " : "") + firstItem + (finalItem != null ? " - " + finalItem : "");
+                        shorthandList = firstItem + (finalItem != null ? " - " + finalItem : "") + (shorthandList != null ? " & " : "") + shorthandList;
 
                         firstItem = item.Key;
                         prevItemValue = itemValue;
@@ -279,8 +279,9 @@ namespace Escalator
                 new Tuple<string, int>("Email Rule", 5),
                 new Tuple<string, int>("PO Rule", 5),
                 new Tuple<string, int>("Subdivision", 40),
-                new Tuple<string, int>("Verify Text", 60),
+                new Tuple<string, int>("Requested Date", 20),
                 new Tuple<string, int>("Email", 30),
+                new Tuple<string, int>("Verify Text", 60)
             });
 
             var rowCounter = 1;
@@ -302,10 +303,13 @@ namespace Escalator
                 col.SetCellValue(order.IsSpotLot ? "" : order.FinalSubdivision);
 
                 col = row.CreateCell(colCounter++);
-                col.SetCellValue(order.VerifyText);
+                col.SetCellValue(order.RequestedDate);
 
                 col = row.CreateCell(colCounter++);
                 col.SetCellValue(order.FinalEmail);
+
+                col = row.CreateCell(colCounter++);
+                col.SetCellValue(order.VerifyText);
 
                 highestCol = colCounter;
                 colCounter = 0;
