@@ -78,6 +78,15 @@ namespace Escalator
                     return;
                 }
 
+                if (openFileDialog1.FileName.ToLowerInvariant().Contains("stairs"))
+                {
+                    radioStairs.Checked = true;
+                }
+                else if (openFileDialog1.FileName.ToLowerInvariant().Contains("rails"))
+                {
+                    radioRails.Checked = true;
+                }
+
                 List<string> dates = null;
 
                 try

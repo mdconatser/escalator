@@ -23,6 +23,8 @@ namespace Escalator
         public bool UsePONumber { get; set; }
         public bool Enabled { get; set; }
 
+        //todo: add some auto rule value based on how many fields are filled out, and take the highest rule for that order or do some kind of combination between all rules that apply, but override based on the one with a higher value
+
         public bool Matches(Order order)
         {
             return (!string.IsNullOrWhiteSpace(Address) && !string.IsNullOrWhiteSpace(order.Address) && order.Address.ToLowerInvariant().Equals(Address.ToLowerInvariant()))

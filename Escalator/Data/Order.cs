@@ -35,7 +35,7 @@ namespace Escalator
             get 
             { 
                 return (Rules.UsePONumber
-                    ? CustomerPONumber
+                    ? "PO " + CustomerPONumber
                     : IsSpotLot 
                         ? Address 
                         : Lot + " " + FinalSubdivision) + " " + OrderType.ToString(); 

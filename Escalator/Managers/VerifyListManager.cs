@@ -412,9 +412,9 @@ namespace Escalator
                     OriginalEmail = row.GetCell(4)?.ToString(),
                     UpdatedEmail = row.GetCell(5)?.ToString(),
                     UpdatedSubdivision = row.GetCell(6)?.ToString(),
-                    SkipProcessing = string.IsNullOrWhiteSpace(row.GetCell(7)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(5)?.ToString()),
-                    ShowError = string.IsNullOrWhiteSpace(row.GetCell(8)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(6)?.ToString()),
-                    UsePONumber = string.IsNullOrWhiteSpace(row.GetCell(9)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(7)?.ToString())
+                    SkipProcessing = string.IsNullOrWhiteSpace(row.GetCell(7)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(7)?.ToString()),
+                    ShowError = string.IsNullOrWhiteSpace(row.GetCell(8)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(8)?.ToString()),
+                    UsePONumber = string.IsNullOrWhiteSpace(row.GetCell(9)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(9)?.ToString())
                 });
             }
 
