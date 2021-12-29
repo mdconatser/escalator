@@ -24,7 +24,7 @@ namespace Escalator
 
             List<Order> orders = ImportOrders(path, orderType);
             orders = orders.Where(x => requestedDates.Contains(x.RequestedDate)).ToList();
-            orders = orders.OrderBy(x => x.Subdivision).ThenBy(x => x.Lot).ThenBy(x => x.Address).ToList();
+            orders = orders.OrderBy(x => x.Subdivision).ThenBy(x => x.Lot).ThenBy(x => x.Address).ThenBy(x => x.CustomerPONumber).ToList();
             orders = ApplyOrderRules(orders);
             var errors = ValidateOrders(orders);
 
@@ -55,7 +55,7 @@ namespace Escalator
             List<string> errors = new();
 
             // Check for any rules that specifically say to display an error
-            foreach (var order in orders.Where(x => x.Rules?.ShowError ?? false))
+            foreach (var order in orders.Where(x => x.Rules.ShowError))
             {
                 errors.Add($"Your Rules.xlsx found: {order.Company} / {order.Subdivision} / {order.Lot} / {order.Address}");
             }
@@ -72,7 +72,7 @@ namespace Escalator
                 }
 
                 // Check for multiple rules being applied within the same subdivision
-                if (subdivision.Select(x => x.Rules).Distinct().Count() > 1)
+                if (subdivision.Select(x => x.Rules).Where(x => x.Enabled).Distinct().Count() > 1)
                 {
                     errors.Add($"Multiple rules were attempted to be applied to subdivision \"{subdivision.Key}\". Please double-check the output for this subdivision.");
                 }
@@ -94,80 +94,76 @@ namespace Escalator
         {
             var combined = new List<Order>();
 
-            foreach (var subdivision in orders.Where(x => !x.IsSpotLot).GroupBy(x => x.Subdivision))
+            var subdivisionGroups = orders.Where(x => !x.IsSpotLot && !x.Rules.UsePONumber).GroupBy(x => x.Subdivision);
+            var spotLotGroups = orders.Where(x => x.IsSpotLot && !x.Rules.UsePONumber).OrderBy(x => x.Address).GroupBy(x => x.Address);
+            var poNumberGroups = orders.Where(x => x.Rules.UsePONumber).GroupBy(x => x.Company);
+            var orderGroupLists = new List<IEnumerable<IGrouping<string, Order>>>() { subdivisionGroups, spotLotGroups, poNumberGroups };
+
+            foreach (var orderGroupList in orderGroupLists)
             {
-                // Check if the lots contain sequential subsets in either character or numeric form
-                string sequentialLot = null;
-
-                if (subdivision.Count() > 1)
+                foreach (var orderGroup in orderGroupList)
                 {
-                    int? prevLotValue = null;
-
-                    string firstLot = null;
-                    string finalLot = null;
-
-                    foreach (var lot in subdivision.OrderBy(x => x.Lot).GroupBy(x => x.Lot).ToList())
-                    {
-                        // Use value of the lot itself if it is a number, otherwise use the 
-                        int lotValueText = Encoding.ASCII.GetBytes(new string(lot.Key.Where(c => !char.IsDigit(c)).ToArray())).Select(x => (int)x).Sum();
-                        int lotValueNumeric = Convert.ToInt32(new string(lot.Key.Where(c => char.IsDigit(c)).ToArray()));
-                        int lotValue = lotValueText + lotValueNumeric;
-
-                        if (!prevLotValue.HasValue || prevLotValue.Value + 1 == lotValue)
-                        {
-                            if (prevLotValue == null)
-                            {
-                                firstLot = lot.Key;
-                                prevLotValue = lotValue;
-                            }
-                            else
-                            {
-                                finalLot = lot.Key;
-                                prevLotValue = lotValue;
-                            }
-                        }
-                        else
-                        {
-                            sequentialLot = sequentialLot + (sequentialLot != null ? " & " : "") + firstLot + (finalLot != null ? " - " + finalLot : "");
-
-                            firstLot = lot.Key;
-                            prevLotValue = lotValue;
-                            finalLot = null;
-                        }
-                    }
-
-                    sequentialLot = sequentialLot + (sequentialLot != null ? " & " : "") + firstLot + (finalLot != null ? " - " + finalLot : "");
+                    var order = (Order)orderGroup.First().Clone();
+                    order.Subdivision = GetFormattedSubdivisionName(orderGroup.Key, subdivisionWordReplacements);
+                    order.Lot = GetShorthandList(orderGroup.Select(x => x.Lot).ToList());
+                    order.CustomerPONumber = GetShorthandList(orderGroup.Select(x => x.CustomerPONumber).ToList());
+                    combined.Add(order);
                 }
-
-                // Create combined order
-                combined.Add(new Order()
-                {
-                    Subdivision = GetFormattedSubdivisionName(subdivision.Key, subdivisionWordReplacements),
-                    Lot = sequentialLot ?? string.Join(", ", subdivision.Select(x => x.Lot)),
-                    Address = subdivision.First().Address,
-                    IsSpotLot = false,
-                    Company = subdivision.First().Company,
-                    Email = subdivision.First().Email,
-                    OrderType = subdivision.First().OrderType,
-                    Rules = subdivision.First().Rules // todo: make it possible for this rules object to be part of the split, to allow more granular control
-                });
-            }
-
-            // Set spot lots and add them to output list
-            foreach (var spotLot in orders.Where(x => x.IsSpotLot).OrderBy(x => x.Address).GroupBy(x => x.Address).ToList())
-            {
-                // Create combined order for all of the same address
-                combined.Add(new Order()
-                {
-                    IsSpotLot = true,
-                    Address = spotLot.First().Address,
-                    Subdivision = spotLot.First().Subdivision,
-                    Lot = spotLot.First().Lot,
-                    OrderType = spotLot.First().OrderType
-                });
             }
 
             return combined;
+        }
+
+        public static string GetShorthandList(List<string> items)
+        {
+            // Check if the items contain sequential subsets in either character or numeric form
+            string shorthandList = null;
+
+            if (items.Count() > 1)
+            {
+                int? prevItemValue = null;
+
+                string firstItem = null;
+                string finalItem = null;
+
+                foreach (var item in items.OrderBy(x => x).GroupBy(x => x).ToList())
+                {
+                    int itemValueText = Encoding.ASCII.GetBytes(new string(item.Key.Where(c => !char.IsDigit(c)).ToArray())).Select(x => (int)x).Sum();
+                    int itemValueNumeric = Convert.ToInt32(new string(item.Key.Where(c => char.IsDigit(c)).ToArray()));
+                    int itemValue = itemValueText + itemValueNumeric;
+
+                    if (!prevItemValue.HasValue || prevItemValue.Value + 1 == itemValue)
+                    {
+                        if (prevItemValue == null)
+                        {
+                            firstItem = item.Key;
+                            prevItemValue = itemValue;
+                        }
+                        else
+                        {
+                            finalItem = item.Key;
+                            prevItemValue = itemValue;
+                        }
+                    }
+                    else
+                    {
+                        shorthandList = shorthandList + (shorthandList != null ? " & " : "") + firstItem + (finalItem != null ? " - " + finalItem : "");
+
+                        firstItem = item.Key;
+                        prevItemValue = itemValue;
+                        finalItem = null;
+                    }
+                }
+
+                shorthandList = shorthandList + (shorthandList != null ? " & " : "") + firstItem + (finalItem != null ? " - " + finalItem : "");
+            }
+
+            if (shorthandList == null)
+            {
+                shorthandList = string.Join(", ", items);
+            }
+
+            return shorthandList;
         }
 
         public static string GetFormattedSubdivisionName(string subdivision, Dictionary<string, string> wordReplacements)
@@ -244,6 +240,7 @@ namespace Escalator
                             RequestedDate = csv.GetCleanedField("Requested Date"),
                             Company = csv.GetCleanedField("Company"),
                             Email = csv.GetCleanedField("Email"),
+                            CustomerPONumber = csv.GetCleanedField("Customer PO#"),
                             OrderType = orderType
                         };
 
@@ -284,7 +281,16 @@ namespace Escalator
             var output = new XSSFWorkbook();
             var outputSheet = output.CreateSheet("Verify List");
 
-            var rowCounter = 0;
+            WriteHeaderRow(outputSheet, new List<Tuple<string, int>>()
+            {
+                new Tuple<string, int>("Email Rule", 5),
+                new Tuple<string, int>("PO Rule", 5),
+                new Tuple<string, int>("Subdivision", 40),
+                new Tuple<string, int>("Verify Text", 60),
+                new Tuple<string, int>("Email", 30),
+            });
+
+            var rowCounter = 1;
             var colCounter = 0;
             var highestCol = 0;
 
@@ -292,22 +298,25 @@ namespace Escalator
             foreach (var order in orders)
             {
                 var row = outputSheet.CreateRow(rowCounter++);
+
                 var col = row.CreateCell(colCounter++);
+                col.SetCellValue(!string.IsNullOrWhiteSpace(order.Rules.Email) ? "X" : "");
+
+                col = row.CreateCell(colCounter++);
+                col.SetCellValue(order.Rules.UsePONumber ? "X" : "");
+
+                col = row.CreateCell(colCounter++);
                 col.SetCellValue(order.IsSpotLot ? "" : order.Subdivision);
 
                 col = row.CreateCell(colCounter++);
                 col.SetCellValue(order.VerifyText);
 
                 col = row.CreateCell(colCounter++);
-                col.SetCellValue(!string.IsNullOrWhiteSpace(order.Rules?.Email) ? order.Rules.Email : order.Email);
+                col.SetCellValue(!string.IsNullOrWhiteSpace(order.Rules.Email) ? order.Rules.Email : order.Email);
 
                 highestCol = colCounter;
                 colCounter = 0;
             }
-
-            outputSheet.SetColumnWidth(0, 40 * 256 + 200);
-            outputSheet.SetColumnWidth(1, 60 * 256 + 200);
-            outputSheet.SetColumnWidth(2, 30 * 256 + 200);
 
             // Write errors on same sheet to the right
             ICellStyle errorStyle = output.CreateCellStyle();
@@ -317,7 +326,7 @@ namespace Escalator
 
             for (int i = 0; i < errors.Count; i++)
             {
-                IRow row = i < rowCounter ? outputSheet.GetRow(i) : outputSheet.CreateRow(rowCounter++);
+                var row = i < rowCounter ? outputSheet.GetRow(i) : outputSheet.CreateRow(rowCounter++);
                 var col = row.CreateCell(highestCol + 2);
                 col.CellStyle = errorStyle;
 
@@ -333,6 +342,21 @@ namespace Escalator
             output.Close();
 
             return outputPath;
+        }
+
+        public static void WriteHeaderRow(ISheet sheet, List<Tuple<string, int>> columnNamesToWidths)
+        {
+            var rowCounter = 0;
+            var colCounter = 0;
+
+            var row = sheet.CreateRow(rowCounter++);
+
+            for (int i = 0; i < columnNamesToWidths.Count; i++)
+            {
+                var col = row.CreateCell(colCounter++);
+                col.SetCellValue(columnNamesToWidths[i].Item1);
+                sheet.SetColumnWidth(i, columnNamesToWidths[i].Item2 * 256 + 200);
+            }
         }
 
         public static Dictionary<string, string> GetSubdivisionWordReplacements()
@@ -387,6 +411,7 @@ namespace Escalator
                 }
 
                 rules.Add(new Rule() {
+                    Enabled = true,
                     Company = row.GetCell(0)?.ToString(),
                     Subdivision = row.GetCell(1)?.ToString(),
                     Lot = row.GetCell(2)?.ToString(),
@@ -394,6 +419,7 @@ namespace Escalator
                     Email = row.GetCell(4)?.ToString(),
                     SkipProcessing = string.IsNullOrWhiteSpace(row.GetCell(5)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(5)?.ToString()),
                     ShowError = string.IsNullOrWhiteSpace(row.GetCell(6)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(6)?.ToString()),
+                    UsePONumber = string.IsNullOrWhiteSpace(row.GetCell(7)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(7)?.ToString())
                 });
             }
 

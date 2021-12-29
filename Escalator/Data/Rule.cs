@@ -16,6 +16,8 @@ namespace Escalator
         public string Email { get; set; }
         public bool SkipProcessing { get; set; }
         public bool ShowError { get; set; }
+        public bool UsePONumber { get; set; }
+        public bool Enabled { get; set; }
 
         public bool Matches(Order order)
         {

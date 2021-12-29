@@ -45,6 +45,6 @@
 	</ItemGroup>
 
 	<Target Name="PostPublish" AfterTargets="Publish">
-		<Exec Command="Powershell.exe -file $(SolutionDir)Escalator\OpenNewRelease.ps1" />
+		<Exec Command="Powershell.exe -file $(SolutionDir)Escalator\post-publish.ps1" />
 	</Target>
 </Project>
