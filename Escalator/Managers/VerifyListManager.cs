@@ -24,8 +24,8 @@ namespace Escalator
 
             List<Order> orders = ImportOrders(path, orderType);
             orders = orders.Where(x => requestedDates.Contains(x.RequestedDate)).ToList();
-            orders = orders.OrderBy(x => x.Subdivision).ThenBy(x => x.Lot).ThenBy(x => x.Address).ThenBy(x => x.CustomerPONumber).ToList();
             orders = ApplyOrderRules(orders);
+            orders = orders.OrderBy(x => x.FinalSubdivision).ThenBy(x => x.Lot).ThenBy(x => x.Address).ThenBy(x => x.CustomerPONumber).ToList();
             var errors = ValidateOrders(orders);
 
             orders = CombineOrders(orders, subdivisionWordReplacements);
@@ -40,16 +40,6 @@ namespace Escalator
             return orders.Select(x => x.RequestedDate).Distinct().OrderBy(x => x).ToList();
         }
 
-        public static List<string> GetKnownAddressSubdivisions()
-        {
-            return Properties.Settings.Default.UseAddress.Split(new string[] { ",", ", ", " , ", " ," }, StringSplitOptions.TrimEntries).ToList();
-        }
-
-        public static bool ShouldUseAddress(string subdivision)
-        {
-            return string.IsNullOrWhiteSpace(subdivision) || GetKnownAddressSubdivisions().Contains(subdivision);
-        }
-
         public static List<string> ValidateOrders(List<Order> orders)
         {
             List<string> errors = new();
@@ -61,7 +51,7 @@ namespace Escalator
             }
 
             // Check for the same lot appearing twice in the same subdivision
-            foreach (var subdivision in orders.Where(x => !x.IsSpotLot).GroupBy(x => x.Subdivision))
+            foreach (var subdivision in orders.Where(x => !x.IsSpotLot).GroupBy(x => x.FinalSubdivision))
             {
                 foreach (var lot in subdivision.Select(x => x.Lot).Distinct())
                 {
@@ -94,7 +84,7 @@ namespace Escalator
         {
             var combined = new List<Order>();
 
-            var subdivisionGroups = orders.Where(x => !x.IsSpotLot && !x.Rules.UsePONumber).GroupBy(x => x.Subdivision);
+            var subdivisionGroups = orders.Where(x => !x.IsSpotLot && !x.Rules.UsePONumber).GroupBy(x => x.FinalSubdivision);
             var spotLotGroups = orders.Where(x => x.IsSpotLot && !x.Rules.UsePONumber).OrderBy(x => x.Address).GroupBy(x => x.Address);
             var poNumberGroups = orders.Where(x => x.Rules.UsePONumber).GroupBy(x => x.Company);
             var orderGroupLists = new List<IEnumerable<IGrouping<string, Order>>>() { subdivisionGroups, spotLotGroups, poNumberGroups };
@@ -104,7 +94,7 @@ namespace Escalator
                 foreach (var orderGroup in orderGroupList)
                 {
                     var order = (Order)orderGroup.First().Clone();
-                    order.Subdivision = GetFormattedSubdivisionName(orderGroup.Key, subdivisionWordReplacements);
+                    order.Subdivision = GetFormattedSubdivisionName(orderGroup.First().FinalSubdivision, subdivisionWordReplacements);
                     order.Lot = GetShorthandList(orderGroup.Select(x => x.Lot).ToList());
                     order.CustomerPONumber = GetShorthandList(orderGroup.Select(x => x.CustomerPONumber).ToList());
                     combined.Add(order);
@@ -184,7 +174,7 @@ namespace Escalator
 
         static public string ReplaceWholeWord(this string original, string wordToFind, string replacement, RegexOptions regexOptions = RegexOptions.None)
         {
-            string pattern = String.Format(@"\b{0}\b", wordToFind);
+            string pattern = string.Format(@"\b{0}\b", wordToFind);
             string ret = Regex.Replace(original, pattern, replacement, regexOptions);
             return ret;
         }
@@ -193,36 +183,36 @@ namespace Escalator
         public static List<Order> ImportOrders(string path, OrderType orderType)
         {
             List<Order> records = new();
-            IWorkbook book;
+            //IWorkbook book;
 
-            FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            //FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-            // Try to read workbook as XLSX:
-            try
-            {
-                book = new XSSFWorkbook(fs);
-            }
-            catch
-            {
-                book = null;
-            }
+            //// Try to read workbook as XLSX:
+            //try
+            //{
+            //    book = new XSSFWorkbook(fs);
+            //}
+            //catch
+            //{
+            //    book = null;
+            //}
 
-            // If reading fails, try to read workbook as XLS:
-            if (book == null)
-            {
-                try
-                {
-                    book = new HSSFWorkbook(fs);
-                }
-                catch
-                {
-                    book = null;
-                }
-            }
+            //// If reading fails, try to read workbook as XLS:
+            //if (book == null)
+            //{
+            //    try
+            //    {
+            //        book = new HSSFWorkbook(fs);
+            //    }
+            //    catch
+            //    {
+            //        book = null;
+            //    }
+            //}
 
             // If reading fails, try to read workbook as CSV:
-            if (book == null)
-            {
+            //if (book == null)
+            //{
                 var config = new CsvConfiguration(CultureInfo.InvariantCulture);
                 using (var reader = new StreamReader(path))
                 using (var csv = new CsvReader(reader, config))
@@ -244,29 +234,28 @@ namespace Escalator
                             OrderType = orderType
                         };
 
-                        record.IsSpotLot = ShouldUseAddress(record.Subdivision);
                         records.Add(record);
                     }
                 }
-            }
-            else
-            {
-                var sheet = book.GetSheetAt(0);
+            //}
+            //else
+            //{
+            //    var sheet = book.GetSheetAt(0);
 
-                records = new List<Order>();
+            //    records = new List<Order>();
 
-                // Get orders from input, skip header row
-                for (int rowIndex = 1; rowIndex <= sheet.LastRowNum; rowIndex++)
-                {
-                    records.Add(new Order()
-                    {
-                        Lot = sheet.GetRow(rowIndex).Cells[Convert.ToInt32(3)].ToString(),
-                        Subdivision = sheet.GetRow(rowIndex).Cells[Convert.ToInt32(4)].ToString()
-                    });
-                }
+            //    // Get orders from input, skip header row
+            //    for (int rowIndex = 1; rowIndex <= sheet.LastRowNum; rowIndex++)
+            //    {
+            //        records.Add(new Order()
+            //        {
+            //            Lot = sheet.GetRow(rowIndex).Cells[Convert.ToInt32(3)].ToString(),
+            //            Subdivision = sheet.GetRow(rowIndex).Cells[Convert.ToInt32(4)].ToString()
+            //        });
+            //    }
 
-                book.Close();
-            }
+            //    book.Close();
+            //}
 
             return records;
         }
@@ -300,19 +289,19 @@ namespace Escalator
                 var row = outputSheet.CreateRow(rowCounter++);
 
                 var col = row.CreateCell(colCounter++);
-                col.SetCellValue(!string.IsNullOrWhiteSpace(order.Rules.Email) ? "X" : "");
+                col.SetCellValue(!string.IsNullOrWhiteSpace(order.Rules.UpdatedEmail) ? "X" : "");
 
                 col = row.CreateCell(colCounter++);
                 col.SetCellValue(order.Rules.UsePONumber ? "X" : "");
 
                 col = row.CreateCell(colCounter++);
-                col.SetCellValue(order.IsSpotLot ? "" : order.Subdivision);
+                col.SetCellValue(order.IsSpotLot ? "" : order.FinalSubdivision);
 
                 col = row.CreateCell(colCounter++);
                 col.SetCellValue(order.VerifyText);
 
                 col = row.CreateCell(colCounter++);
-                col.SetCellValue(!string.IsNullOrWhiteSpace(order.Rules.Email) ? order.Rules.Email : order.Email);
+                col.SetCellValue(order.FinalEmail);
 
                 highestCol = colCounter;
                 colCounter = 0;
@@ -365,10 +354,10 @@ namespace Escalator
 
             IWorkbook book;
 
-            FileStream fs = new FileStream("SubdivisionWordReplacements.xlsx", FileMode.Open, FileAccess.Read);
+            FileStream fs = new FileStream("Rules.xlsx", FileMode.Open, FileAccess.Read);
             book = new XSSFWorkbook(fs);
 
-            var sheet = book.GetSheetAt(0);
+            var sheet = book.GetSheetAt(1);
 
             // Get orders from input, skip header row
             for (int rowIndex = 1; rowIndex <= sheet.LastRowNum; rowIndex++)
@@ -399,12 +388,12 @@ namespace Escalator
             FileStream fs = new FileStream("Rules.xlsx", FileMode.Open, FileAccess.Read);
             book = new XSSFWorkbook(fs);
 
-            var sheet = book.GetSheetAt(0);
+            var sheetRules = book.GetSheetAt(0);
 
-            // Get orders from input, skip header row
-            for (int rowIndex = 1; rowIndex <= sheet.LastRowNum; rowIndex++)
+            // Get orders from input, skip header rows
+            for (int rowIndex = 2; rowIndex <= sheetRules.LastRowNum; rowIndex++)
             {
-                var row = sheet.GetRow(rowIndex);
+                var row = sheetRules.GetRow(rowIndex);
                 if (row == null)
                 {
                     continue;
@@ -416,10 +405,12 @@ namespace Escalator
                     Subdivision = row.GetCell(1)?.ToString(),
                     Lot = row.GetCell(2)?.ToString(),
                     Address = row.GetCell(3)?.ToString(),
-                    Email = row.GetCell(4)?.ToString(),
-                    SkipProcessing = string.IsNullOrWhiteSpace(row.GetCell(5)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(5)?.ToString()),
-                    ShowError = string.IsNullOrWhiteSpace(row.GetCell(6)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(6)?.ToString()),
-                    UsePONumber = string.IsNullOrWhiteSpace(row.GetCell(7)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(7)?.ToString())
+                    OriginalEmail = row.GetCell(4)?.ToString(),
+                    UpdatedEmail = row.GetCell(5)?.ToString(),
+                    UpdatedSubdivision = row.GetCell(6)?.ToString(),
+                    SkipProcessing = string.IsNullOrWhiteSpace(row.GetCell(7)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(5)?.ToString()),
+                    ShowError = string.IsNullOrWhiteSpace(row.GetCell(8)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(6)?.ToString()),
+                    UsePONumber = string.IsNullOrWhiteSpace(row.GetCell(9)?.ToString()) ? false : Convert.ToBoolean(row.GetCell(7)?.ToString())
                 });
             }
 

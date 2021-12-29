@@ -13,7 +13,11 @@ namespace Escalator
         public string Lot { get; set; }
         public string Address { get; set; }
         public string Company { get; set; }
-        public string Email { get; set; }
+        public string OriginalEmail { get; set; }
+
+
+        public string UpdatedEmail { get; set; }
+        public string UpdatedSubdivision { get; set; }
         public bool SkipProcessing { get; set; }
         public bool ShowError { get; set; }
         public bool UsePONumber { get; set; }
@@ -24,7 +28,8 @@ namespace Escalator
             return (!string.IsNullOrWhiteSpace(Address) && !string.IsNullOrWhiteSpace(order.Address) && order.Address.ToLowerInvariant().Equals(Address.ToLowerInvariant()))
                 || (!string.IsNullOrWhiteSpace(Subdivision) && !string.IsNullOrWhiteSpace(Lot) && !string.IsNullOrWhiteSpace(order.Subdivision) && !string.IsNullOrWhiteSpace(order.Lot) && order.Subdivision.ToLowerInvariant().Equals(Subdivision.ToLowerInvariant()) && order.Lot.ToLowerInvariant().Equals(Lot.ToLowerInvariant()))
                 || (!string.IsNullOrWhiteSpace(Subdivision) && !string.IsNullOrWhiteSpace(order.Subdivision) && order.Subdivision.ToLowerInvariant().Equals(Subdivision.ToLowerInvariant()))
-                || (!string.IsNullOrWhiteSpace(Company) && !string.IsNullOrWhiteSpace(order.Company) && order.Company.ToLowerInvariant().Equals(Company.ToLowerInvariant()));
+                || (!string.IsNullOrWhiteSpace(Company) && !string.IsNullOrWhiteSpace(order.Company) && order.Company.ToLowerInvariant().Equals(Company.ToLowerInvariant()))
+                || (!string.IsNullOrWhiteSpace(OriginalEmail) && !string.IsNullOrWhiteSpace(order.Email) && order.Email.ToLowerInvariant().Equals(OriginalEmail.ToLowerInvariant()));
         }
     }
 }

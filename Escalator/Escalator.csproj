@@ -12,14 +12,10 @@
 
 	<ItemGroup>
 		<None Remove="Rules.xlsx" />
-		<None Remove="SubdivisionWordReplacements.xlsx" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Content Include="Rules.xlsx">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Include="SubdivisionWordReplacements.xlsx">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
@@ -27,21 +23,6 @@
 	<ItemGroup>
 		<PackageReference Include="CsvHelper" Version="27.2.1" />
 		<PackageReference Include="DotNetCore.NPOI" Version="1.2.3" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Compile Update="Properties\Settings.Designer.cs">
-			<DesignTimeSharedInput>True</DesignTimeSharedInput>
-			<AutoGen>True</AutoGen>
-			<DependentUpon>Settings.settings</DependentUpon>
-		</Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Update="Properties\Settings.settings">
-			<Generator>SettingsSingleFileGenerator</Generator>
-			<LastGenOutput>Settings.Designer.cs</LastGenOutput>
-		</None>
 	</ItemGroup>
 
 	<Target Name="PostPublish" AfterTargets="Publish">

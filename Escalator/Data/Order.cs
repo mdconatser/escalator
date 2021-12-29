@@ -21,8 +21,13 @@ namespace Escalator
         public string Company { get; set; }
         public string Email { get; set; }
         public string CustomerPONumber { get; set; }
-        internal bool IsSpotLot { get; set; }
+
+        internal bool IsSpotLot { get { return Rules.UpdatedSubdivision == "#blank" || string.IsNullOrWhiteSpace(Subdivision); } }
         internal OrderType OrderType { get; set; }
+
+        internal string FinalEmail { get { return string.IsNullOrWhiteSpace(Rules.UpdatedEmail) ? Email : Rules.UpdatedEmail == "#blank" ? "" : Rules.UpdatedEmail; } }
+        internal string FinalSubdivision { get { return string.IsNullOrWhiteSpace(Rules.UpdatedSubdivision) ? Subdivision : Rules.UpdatedSubdivision == "#blank" ? "" : Rules.UpdatedSubdivision; } }
+
         internal Rule Rules { get; set; }
         internal string VerifyText 
         { 
@@ -32,7 +37,7 @@ namespace Escalator
                     ? CustomerPONumber
                     : IsSpotLot 
                         ? Address 
-                        : Lot + " " + Subdivision) + " " + OrderType.ToString(); 
+                        : Lot + " " + FinalSubdivision) + " " + OrderType.ToString(); 
             } 
         }
 
@@ -47,7 +52,6 @@ namespace Escalator
                 Company = Company,
                 Email = Email,
                 CustomerPONumber = CustomerPONumber,
-                IsSpotLot = IsSpotLot,
                 OrderType = OrderType,
                 Rules = Rules
             };
