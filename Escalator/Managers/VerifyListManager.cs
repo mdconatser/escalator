@@ -22,9 +22,12 @@ namespace Escalator
             orders = RuleManager.ApplyOrderRules(orders);
             orders = orders.OrderBy(x => x.FinalSubdivision).ThenBy(x => x.Lot).ThenBy(x => x.Address).ThenBy(x => x.CustomerPONumber).ToList();
 
+            List<Order> skippedOrders = orders.Where(x => x.Rules.SkipProcessing).ToList();
+            orders = orders.Where(x => !x.Rules.SkipProcessing).ToList();
+
             orders = OrderManager.CombineOrders(orders, subdivisionWordReplacements);
 
-            string outputPath = WriteVerifyList(orders, path);
+            string outputPath = WriteVerifyList(orders.Concat(skippedOrders).ToList(), path);
             Process.Start(new ProcessStartInfo(outputPath) { UseShellExecute = true });
         }
 
@@ -40,13 +43,24 @@ namespace Escalator
 
             WriteHeaderRow(outputSheet, new List<Tuple<string, int>>()
             {
-                new Tuple<string, int>("Email Rule", 5),
-                new Tuple<string, int>("PO Rule", 5),
+                new Tuple<string, int>("Raw", 4),
+                new Tuple<string, int>("Adj. Email", 10),
+                new Tuple<string, int>("Adj. Sub", 8),
+                new Tuple<string, int>("Use PO", 7),
                 new Tuple<string, int>("Subdivision", 40),
-                new Tuple<string, int>("Requested Date", 20),
+                new Tuple<string, int>("Requested Date", 15),
                 new Tuple<string, int>("Email", 30),
                 new Tuple<string, int>("Verify Text", 60)
             });
+
+            ICellStyle errorStyle = output.CreateCellStyle();
+            XSSFFont font = (XSSFFont)output.CreateFont();
+            font.Color = HSSFColor.Red.Index;
+            errorStyle.SetFont(font);
+
+            ICellStyle warningStyle = output.CreateCellStyle();
+            warningStyle.FillForegroundColor = HSSFColor.Yellow.Index;
+            warningStyle.FillPattern = FillPattern.SolidForeground;
 
             var rowCounter = 1;
             var colCounter = 0;
@@ -58,10 +72,20 @@ namespace Escalator
                 var row = outputSheet.CreateRow(rowCounter++);
 
                 var col = row.CreateCell(colCounter++);
+                col.SetCellValue(order.Rules.SkipProcessing ? "X" : "");
+                if (col.StringCellValue == "X") { col.CellStyle = warningStyle; }
+
+                col = row.CreateCell(colCounter++);
                 col.SetCellValue(!string.IsNullOrWhiteSpace(order.Rules.UpdatedEmail) ? "X" : "");
+                if (col.StringCellValue == "X") { col.CellStyle = warningStyle; }
+
+                col = row.CreateCell(colCounter++);
+                col.SetCellValue(!string.IsNullOrWhiteSpace(order.Rules.UpdatedSubdivision) ? "X" : "");
+                if (col.StringCellValue == "X") { col.CellStyle = warningStyle; }
 
                 col = row.CreateCell(colCounter++);
                 col.SetCellValue(order.Rules.UsePONumber ? "X" : "");
+                if (col.StringCellValue == "X") { col.CellStyle = warningStyle; }
 
                 col = row.CreateCell(colCounter++);
                 col.SetCellValue(order.IsSpotLot ? "" : order.FinalSubdivision);
@@ -80,10 +104,6 @@ namespace Escalator
             }
 
             // Write errors on same sheet to the right
-            ICellStyle errorStyle = output.CreateCellStyle();
-            XSSFFont font = (XSSFFont)output.CreateFont();
-            font.Color = HSSFColor.Red.Index;
-            errorStyle.SetFont(font);
             var logs = LogManager.GetLogs();
 
             for (int i = 0; i < logs.Count; i++)

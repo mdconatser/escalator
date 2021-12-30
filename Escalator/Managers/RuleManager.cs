@@ -48,13 +48,16 @@ namespace Escalator.Managers
                         matches.Add(rule);
                     }
                 }
-
-                order.Rules = new Rule(order, matches);
-
-                // Check for any rules that specifically say to display an error
-                if (order.Rules.ShowError)
+                
+                if (matches.Count > 0)
                 {
-                    LogManager.Log($"Your Rules.xlsx matched an order: {order}");
+                    order.Rules = new Rule(order, matches);
+
+                    // Check for any rules that specifically say to display an error
+                    if (order.Rules.ShowError)
+                    {
+                        LogManager.Log($"Your Rules.xlsx matched an order: {order}");
+                    }
                 }
             }
 

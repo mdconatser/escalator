@@ -13,6 +13,8 @@ namespace Escalator
 
         public Order(CsvReader csv, OrderType orderType)
         {
+            Rules = new Rule();
+
             OrderID = csv.GetCleanedField("Order ID");
             Lot = csv.GetCleanedField("Lot");
             Subdivision = csv.GetCleanedField("Subdivision");
@@ -33,11 +35,11 @@ namespace Escalator
         public string Email { get; set; }
         public string CustomerPONumber { get; set; }
 
-        internal bool IsSpotLot { get { return Rules.UpdatedSubdivision == "#blank" || string.IsNullOrWhiteSpace(Subdivision); } }
+        internal bool IsSpotLot { get { return string.IsNullOrWhiteSpace(FinalSubdivision); } }
         internal OrderType OrderType { get; set; }
 
-        internal string FinalEmail { get { return string.IsNullOrWhiteSpace(Rules.UpdatedEmail) ? Email : Rules.UpdatedEmail == "#blank" ? "" : Rules.UpdatedEmail; } }
-        internal string FinalSubdivision { get { return string.IsNullOrWhiteSpace(Rules.UpdatedSubdivision) ? Subdivision : Rules.UpdatedSubdivision == "#blank" ? "" : Rules.UpdatedSubdivision; } }
+        internal string FinalEmail { get { return string.IsNullOrWhiteSpace(Rules.UpdatedEmail) || Rules.SkipProcessing || Rules.Enabled ? Email : Rules.UpdatedEmail == "#blank" ? "" : Rules.UpdatedEmail; } }
+        internal string FinalSubdivision { get { return string.IsNullOrWhiteSpace(Rules.UpdatedSubdivision) || Rules.SkipProcessing || Rules.Enabled ? Subdivision : Rules.UpdatedSubdivision == "#blank" ? "" : Rules.UpdatedSubdivision; } }
 
         internal bool HasDetails 
         { 

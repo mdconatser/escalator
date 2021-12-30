@@ -30,21 +30,28 @@ namespace Escalator
 
         public Rule(Order order, List<Rule> rules)
         {
-            Enabled = rules.Any(x => x.Enabled);
+            if (rules.Any(x => x.SkipProcessing))
+            {
+                SkipProcessing = true;
+            }   
+            else
+            {
+                Enabled = rules.Any(x => x.Enabled);
 
-            // Fields that affect output
-            UpdatedEmail = MergeField(order, rules.Select(x => x.UpdatedEmail), "Email");
-            UpdatedSubdivision = MergeField(order, rules.Select(x => x.UpdatedSubdivision), "Subdivision");
-            UsePONumber = rules.Any(x => x.UsePONumber);
-            ShowError = rules.Any(x => x.ShowError);
-            SkipProcessing = rules.Any(x => x.SkipProcessing);
+                // Fields that affect output
+                UpdatedEmail = MergeField(order, rules.Select(x => x.UpdatedEmail), "Email");
+                UpdatedSubdivision = MergeField(order, rules.Select(x => x.UpdatedSubdivision), "Subdivision");
+                UsePONumber = rules.Any(x => x.UsePONumber);
+                ShowError = rules.Any(x => x.ShowError);
+                SkipProcessing = rules.Any(x => x.SkipProcessing);
 
-            // Merged match rules, shouldn't be very useful after this method
-            Address = rules.Select(x => x.Address).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
-            Company = rules.Select(x => x.Company).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
-            Lot = rules.Select(x => x.Lot).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
-            OriginalEmail = rules.Select(x => x.OriginalEmail).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
-            Subdivision = rules.Select(x => x.Subdivision).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+                // Merged match rules, shouldn't be very useful after this method
+                Address = rules.Select(x => x.Address).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+                Company = rules.Select(x => x.Company).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+                Lot = rules.Select(x => x.Lot).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+                OriginalEmail = rules.Select(x => x.OriginalEmail).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+                Subdivision = rules.Select(x => x.Subdivision).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+            }
         }
 
         public string Subdivision { get; set; }
