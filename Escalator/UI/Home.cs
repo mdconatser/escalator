@@ -46,7 +46,7 @@ namespace Escalator
 
             try
             {
-                VerifyListManager.ConvertExportToVerifyList(
+                VerifyListManager.CreateVerifyList(
                     openFileDialog1.FileName,
                     dates,
                     radioStairs.Checked

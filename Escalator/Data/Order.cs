@@ -1,9 +1,6 @@
-﻿using Escalator.Data;
+﻿using CsvHelper;
+using Escalator.Data;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Escalator
 {
@@ -12,6 +9,19 @@ namespace Escalator
         public Order()
         {
             Rules = new Rule();
+        }
+
+        public Order(CsvReader csv, OrderType orderType)
+        {
+            OrderID = csv.GetCleanedField("Order ID");
+            Lot = csv.GetCleanedField("Lot");
+            Subdivision = csv.GetCleanedField("Subdivision");
+            Address = csv.GetCleanedField("Address");
+            RequestedDate = csv.GetCleanedField("Requested Date");
+            Company = csv.GetCleanedField("Company");
+            Email = csv.GetCleanedField("Email");
+            CustomerPONumber = csv.GetCleanedField("Customer PO#");
+            OrderType = orderType;
         }
         
         public string OrderID { get; set; }
@@ -28,6 +38,21 @@ namespace Escalator
 
         internal string FinalEmail { get { return string.IsNullOrWhiteSpace(Rules.UpdatedEmail) ? Email : Rules.UpdatedEmail == "#blank" ? "" : Rules.UpdatedEmail; } }
         internal string FinalSubdivision { get { return string.IsNullOrWhiteSpace(Rules.UpdatedSubdivision) ? Subdivision : Rules.UpdatedSubdivision == "#blank" ? "" : Rules.UpdatedSubdivision; } }
+
+        internal bool HasDetails 
+        { 
+            get 
+            {
+                return !string.IsNullOrWhiteSpace(OrderID)
+                    || !string.IsNullOrWhiteSpace(Subdivision)
+                    || !string.IsNullOrWhiteSpace(Lot)
+                    || !string.IsNullOrWhiteSpace(Address)
+                    || !string.IsNullOrWhiteSpace(Company)
+                    || !string.IsNullOrWhiteSpace(RequestedDate)
+                    || !string.IsNullOrWhiteSpace(Email)
+                    || !string.IsNullOrWhiteSpace(CustomerPONumber);
+            } 
+        }
 
         internal Rule Rules { get; set; }
         internal string VerifyText 
@@ -46,6 +71,7 @@ namespace Escalator
         {
             return new Order()
             {
+                OrderID = OrderID,
                 Subdivision = Subdivision,
                 Lot = Lot,
                 Address = Address,
@@ -56,6 +82,11 @@ namespace Escalator
                 OrderType = OrderType,
                 Rules = Rules
             };
+        }
+
+        public override string ToString()
+        {
+            return $"{OrderID} / {Company} / {Subdivision} / {Lot} / {Address} / {Email} / {CustomerPONumber}";
         }
     }
 }
