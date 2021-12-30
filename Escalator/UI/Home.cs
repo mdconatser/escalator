@@ -1,6 +1,7 @@
 ﻿using Escalator.Data;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -117,6 +118,12 @@ namespace Escalator
                     checklistDates.SetItemChecked(0, true);
                 }
             }
+        }
+
+        private void btnOpenRules_Click(object sender, EventArgs e)
+        {
+            string executingFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            Process.Start(new ProcessStartInfo(executingFolder + "/Rules.xlsx") { UseShellExecute = true });
         }
     }
 }

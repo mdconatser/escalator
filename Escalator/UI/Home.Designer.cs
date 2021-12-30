@@ -40,6 +40,7 @@ namespace Escalator
             this.checklistDates = new System.Windows.Forms.CheckedListBox();
             this.label1 = new System.Windows.Forms.Label();
             this.lblUpload = new System.Windows.Forms.Label();
+            this.btnOpenRules = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -82,7 +83,7 @@ namespace Escalator
             // button2
             // 
             this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.button2.Location = new System.Drawing.Point(370, 205);
+            this.button2.Location = new System.Drawing.Point(423, 205);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(120, 23);
             this.button2.TabIndex = 3;
@@ -118,7 +119,7 @@ namespace Escalator
             this.checklistDates.FormattingEnabled = true;
             this.checklistDates.Location = new System.Drawing.Point(147, 75);
             this.checklistDates.Name = "checklistDates";
-            this.checklistDates.Size = new System.Drawing.Size(343, 94);
+            this.checklistDates.Size = new System.Drawing.Size(396, 94);
             this.checklistDates.TabIndex = 6;
             // 
             // label1
@@ -139,11 +140,23 @@ namespace Escalator
             this.lblUpload.TabIndex = 8;
             this.lblUpload.Text = "*";
             // 
+            // btnOpenRules
+            // 
+            this.btnOpenRules.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnOpenRules.Location = new System.Drawing.Point(423, 12);
+            this.btnOpenRules.Name = "btnOpenRules";
+            this.btnOpenRules.Size = new System.Drawing.Size(120, 23);
+            this.btnOpenRules.TabIndex = 9;
+            this.btnOpenRules.Text = "View Rules...";
+            this.btnOpenRules.UseVisualStyleBackColor = true;
+            this.btnOpenRules.Click += new System.EventHandler(this.btnOpenRules_Click);
+            // 
             // Home
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(502, 240);
+            this.ClientSize = new System.Drawing.Size(555, 240);
+            this.Controls.Add(this.btnOpenRules);
             this.Controls.Add(this.lblUpload);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.checklistDates);
@@ -174,6 +187,7 @@ namespace Escalator
         private System.Windows.Forms.CheckedListBox checklistDates;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label lblUpload;
+        private System.Windows.Forms.Button btnOpenRules;
     }
 }
 
