@@ -124,7 +124,7 @@ namespace Escalator
             string path = string.Empty;
             try
             {
-                path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "Rules.xlsx");
+                path = Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory), "Rules.xlsx");
                 Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
             }
             catch (Exception ex)
