@@ -16,5 +16,10 @@ namespace Escalator.Managers
         {
             return _logs.ToList();
         }
+
+        public static void Clear()
+        {
+            _logs.Clear();
+        }
     }
 }

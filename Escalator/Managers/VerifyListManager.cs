@@ -25,9 +25,13 @@ namespace Escalator
             List<Order> skippedOrders = orders.Where(x => x.Rules.SkipProcessing).ToList();
             orders = orders.Where(x => !x.Rules.SkipProcessing).ToList();
 
-            orders = OrderManager.CombineOrders(orders, subdivisionWordReplacements);
+            orders = OrderManager.CombineOrders(orders, subdivisionWordReplacements)
+                .Concat(skippedOrders)
+                .OrderBy(x => x.ImportSequenceNumber)
+                .ToList();
 
-            string outputPath = WriteVerifyList(orders.Concat(skippedOrders).ToList(), path);
+            string outputPath = WriteVerifyList(orders, path);
+            LogManager.Clear();
             Process.Start(new ProcessStartInfo(outputPath) { UseShellExecute = true });
         }
 

@@ -22,9 +22,11 @@ namespace Escalator.Managers
                 csv.Read();
                 csv.ReadHeader();
 
+                int importNumber = 0;
                 while (csv.Read())
                 {
                     var record = new Order(csv, orderType);
+                    record.ImportSequenceNumber = importNumber++; // after all ordering to create combined records, put them back in a similar order as they were imported for user convenience
 
                     if (record.HasDetails)
                     {
@@ -58,6 +60,7 @@ namespace Escalator.Managers
                     order.Subdivision = RuleManager.GetFormattedSubdivisionName(orderGroup.First().FinalSubdivision, subdivisionWordReplacements);
                     order.Lot = orderGroup.Select(x => x.Lot).ToShorthandList("lot", order.Subdivision);
                     order.CustomerPONumber = orderGroup.Select(x => x.CustomerPONumber).ToShorthandList("PO number", order.Company);
+                    order.ImportSequenceNumber = orderGroup.Select(x => x.ImportSequenceNumber).Min();
                     combined.Add(order);
                 }
             }

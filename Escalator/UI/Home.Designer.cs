@@ -31,10 +31,10 @@ namespace Escalator
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Home));
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.button1 = new System.Windows.Forms.Button();
+            this.btnUploadOrderList = new System.Windows.Forms.Button();
             this.radioStairs = new System.Windows.Forms.RadioButton();
             this.radioRails = new System.Windows.Forms.RadioButton();
-            this.button2 = new System.Windows.Forms.Button();
+            this.btnCreateVerifyList = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.lblError = new System.Windows.Forms.Label();
             this.checklistDates = new System.Windows.Forms.CheckedListBox();
@@ -48,15 +48,15 @@ namespace Escalator
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // button1
+            // btnUploadOrderList
             // 
-            this.button1.Location = new System.Drawing.Point(12, 12);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(113, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "Upload Order List";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.btnUploadOrderList.Location = new System.Drawing.Point(12, 12);
+            this.btnUploadOrderList.Name = "btnUploadOrderList";
+            this.btnUploadOrderList.Size = new System.Drawing.Size(113, 23);
+            this.btnUploadOrderList.TabIndex = 0;
+            this.btnUploadOrderList.Text = "Upload Order List";
+            this.btnUploadOrderList.UseVisualStyleBackColor = true;
+            this.btnUploadOrderList.Click += new System.EventHandler(this.btnUploadOrderList_Click);
             // 
             // radioStairs
             // 
@@ -80,16 +80,16 @@ namespace Escalator
             this.radioRails.Text = "Rails";
             this.radioRails.UseVisualStyleBackColor = true;
             // 
-            // button2
+            // btnCreateVerifyList
             // 
-            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.button2.Location = new System.Drawing.Point(423, 205);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(120, 23);
-            this.button2.TabIndex = 3;
-            this.button2.Text = "Create Verify List";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.btnCreateVerifyList.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCreateVerifyList.Location = new System.Drawing.Point(423, 205);
+            this.btnCreateVerifyList.Name = "btnCreateVerifyList";
+            this.btnCreateVerifyList.Size = new System.Drawing.Size(120, 23);
+            this.btnCreateVerifyList.TabIndex = 3;
+            this.btnCreateVerifyList.Text = "Create Verify List";
+            this.btnCreateVerifyList.UseVisualStyleBackColor = true;
+            this.btnCreateVerifyList.Click += new System.EventHandler(this.btnCreateVerifyList_Click);
             // 
             // groupBox1
             // 
@@ -136,9 +136,8 @@ namespace Escalator
             this.lblUpload.AutoSize = true;
             this.lblUpload.Location = new System.Drawing.Point(147, 16);
             this.lblUpload.Name = "lblUpload";
-            this.lblUpload.Size = new System.Drawing.Size(12, 15);
+            this.lblUpload.Size = new System.Drawing.Size(0, 15);
             this.lblUpload.TabIndex = 8;
-            this.lblUpload.Text = "*";
             // 
             // btnOpenRules
             // 
@@ -162,8 +161,8 @@ namespace Escalator
             this.Controls.Add(this.checklistDates);
             this.Controls.Add(this.lblError);
             this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.button2);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.btnCreateVerifyList);
+            this.Controls.Add(this.btnUploadOrderList);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Home";
             this.Text = "Escalator";
@@ -178,10 +177,10 @@ namespace Escalator
         #endregion
 
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnUploadOrderList;
         private System.Windows.Forms.RadioButton radioStairs;
         private System.Windows.Forms.RadioButton radioRails;
-        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button btnCreateVerifyList;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Label lblError;
         private System.Windows.Forms.CheckedListBox checklistDates;

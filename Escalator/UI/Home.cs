@@ -1,10 +1,9 @@
 ﻿using Escalator.Data;
+using Escalator.Managers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
 namespace Escalator
@@ -20,7 +19,7 @@ namespace Escalator
         {
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void btnCreateVerifyList_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(openFileDialog1.FileName))
             {
@@ -63,7 +62,7 @@ namespace Escalator
             }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnUploadOrderList_Click(object sender, EventArgs e)
         {
             lblError.Text = "";
             lblUpload.Text = "";
@@ -122,8 +121,16 @@ namespace Escalator
 
         private void btnOpenRules_Click(object sender, EventArgs e)
         {
-            string executingFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            Process.Start(new ProcessStartInfo(executingFolder + "/Rules.xlsx") { UseShellExecute = true });
+            string path = string.Empty;
+            try
+            {
+                path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "Rules.xlsx");
+                Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                LogManager.Log("Error opening Rules file at path: " + path + ": " + ex.Message);
+            }
         }
     }
 }

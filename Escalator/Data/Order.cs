@@ -34,6 +34,7 @@ namespace Escalator
         public string Company { get; set; }
         public string Email { get; set; }
         public string CustomerPONumber { get; set; }
+        public int ImportSequenceNumber { get; set; }
 
         internal bool IsSpotLot { get { return string.IsNullOrWhiteSpace(FinalSubdivision); } }
         internal OrderType OrderType { get; set; }
